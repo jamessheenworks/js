@@ -1,8 +1,10 @@
-read -rsp $'Process by root..\n\n'
-/bin/dd if=/dev/zero of=/swap_file bs=1024 count=1M
-chmod 600 /swap_file
-mkswap /swap_file
-echo '/swap_file  swap  swap  defaults  0 0' >> /etc/fstab
-swapon /swap_file
+#!/bin/bash
+#read -rsp $'Process by root..\n\n'
+sudo /bin/dd if=/dev/zero of=/swap_file bs=1024 count=${1}M
+sudo chmod 600 /swap_file
+sudo mkswap /swap_file
+sudo sh -c "echo '/swap_file  swap  swap  defaults  0 0' >> /etc/fstab"
+sudo swapon /swap_file 
 #swapoff /swap_file
 #swapon --show
+
