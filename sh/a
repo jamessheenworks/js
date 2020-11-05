@@ -7,4 +7,5 @@ alias d='diff -s'
 alias s='source'
 alias pip='pip3'
 alias ..='cd ..'
+if [[ ! -f a ]]; then echo 'source a' >> .profile; echo 'source a' >> .bashrc; fi
 
