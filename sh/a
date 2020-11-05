@@ -1,2 +1,10 @@
 #!/bin/bash
-alias a='alias';
+export TERM=xterm
+alias a='alias'
+alias ll='ls -al'
+alias py='python3'
+alias d='diff -s'
+alias s='source'
+alias pip='pip3'
+alias ..='cd ..'
+
