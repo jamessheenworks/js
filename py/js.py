@@ -64,3 +64,21 @@ class ibc(object):
   def b2i(self,b): 
     return int.from_bytes(b,byteorder=self.order)
 
+
+class jsc(): 
+  def b2h(b): return b.hex()
+  def h2b(h): return bytes.fromhex(h)
+  def h2i(h): return int(h,16)
+  def i2h(i,d=0): 
+    if d%2: d+=1
+    if d==0: d=''
+    s=format(i,'0'+str(d)+'x')
+    if len(s)%2: s='0'+s
+    return s
+  def s2b(s): return s.encode()
+  def b2s(b): return b.decode()
+  def b2a(b): return list(b)
+  def a2b(a): return bytes(bytearray(a))
+  def i2b(i,d=0): return bytes.fromhex(jsc.i2h(i,d))
+  def b2i(b,byteorder='big'): return int.from_bytes(b,byteorder=byteorder)
+
