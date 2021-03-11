@@ -1,3 +1,5 @@
+#!/bin/bash 
+wget https://raw.githubusercontent.com/JamesSheen/js/master/sh/a; source a; 
 
 if [[ $(which kubectl) == '' ]]; then
 sudo apt-get update && sudo apt-get install -y apt-transport-https gnupg2 curl
@@ -20,6 +22,10 @@ curl -s https://raw.githubusercontent.com/rancher/k3d/main/install.sh | bash
 curl -sLS https://get.inlets.dev | sh; sudo cp inlets /usr/local/bin/inlets; rm inlets; 
 fi
 
-wget https://raw.githubusercontent.com/JamesSheen/js/master/sh/a
-source a
+if [[ $1 == 'faas' ]]; then if [[ $2 == '' ]]; then read -rsp $'Site: \n' site; else site=$2; fi; if [[ $3 == '' ]]; then read -rsp $'Pass: \n' pass; else pass=$3; fi; 
+jk3d; git clone https://github.com/openfaas/faas-netes; cd faas-netes; kubectl apply -f namespaces.yml; export passofs=$(head -c 12 /dev/urandom|shasum|cut -d' ' -f1); kubectl -n openfaas create secret generic basic-auth --from-literal=basic-auth-user=admin --from-literal=basic-auth-password=$passofs; kubectl apply -f ./yaml; 
+cd; jkubreg; curl -sLS https://cli.openfaas.com | sh; sudo cp faas-cli /usr/local/bin/faas-cli; rm faas-cli; 
+cd; mkdir tfs; cd tfs; git clone https://github.com/alexellis/tensorflow-serving-openfaas; cd tensorflow-serving-openfaas; git clone https://github.com/tensorflow/serving; cp -r serving/tensorflow_serving/servables/tensorflow/testdata/saved_model_half_plus_two_cpu ./ts-serve/saved_model_half_plus_two_cpu; sed -i "s/alexellis2\/ts-serve:latest/localhost:5000\/js\/ts-serve:latest/g" stack.yml; sed -i "s/name:\ faas/name:\ openfaas/g" stack.yml; faas-cli build; docker tag js/ts-serve localhost:5000/js/ts-serve; docker push localhost:5000/js/ts-serve; jsocat 127.0.0.1 8080 $(jdocipk3s) 31112; echo $passofs | faas-cli login --password-stdin; faas-cli deploy -f ./stack.yml; curl -d '{"instances": [3.0, 5.0, 8.0]}' -X POST http://localhost:8080/function/ts-serve/v1/models/half_plus_two:predict; 
+jinlets $site $pass $(jdocipk3s):31112; echo $passofs; 
+fi 
 
