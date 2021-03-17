@@ -20,10 +20,13 @@ sudo chmod 666 /var/run/docker.sock
 fi
 
 if [[ $(which k3d) == '' ]]; then
-curl -s https://raw.githubusercontent.com/rancher/k3d/main/install.sh | bash
-curl -sLS https://get.inlets.dev | sh; sudo cp inlets /usr/local/bin/inlets; rm inlets; 
+curl -s   https://raw.githubusercontent.com/rancher/k3d/main/install.sh | bash 
+curl -sSL https://get.inlets.dev | sh; sudo cp inlets /usr/local/bin/inlets; rm inlets; 
 fi
 
+apt-get update && apt-get install -y make 
+#curl -sSL https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash; # helm 3; 
+#curl -sSL https://raw.githubusercontent.com/helm/helm/master/scripts/get | bash; # helm 2; 
 if [ ! -f a ];then wget https://raw.githubusercontent.com/JamesSheen/js/master/sh/a; source a;fi; 
 
 if [[ $1 == 'faas' ]]; then if [[ $2 == '' ]]; then read -rsp $'Site: \n' site; else site=$2; fi; if [[ $3 == '' ]]; then read -rsp $'Pass: \n' pass; else pass=$3; fi; 
@@ -32,5 +35,26 @@ cd; jkubreg; curl -sLS https://cli.openfaas.com | sh; sudo cp faas-cli /usr/loca
 jsocat 127.0.0.1 8080 $(jdocipk3s) 31112; sleep 20; echo $passofs | faas-cli login --password-stdin; 
 cd; mkdir tfs; cd tfs; git clone https://github.com/alexellis/tensorflow-serving-openfaas; cd tensorflow-serving-openfaas; git clone https://github.com/tensorflow/serving; cp -r serving/tensorflow_serving/servables/tensorflow/testdata/saved_model_half_plus_two_cpu ./ts-serve/saved_model_half_plus_two_cpu; sed -i "s/alexellis2\/ts-serve:latest/localhost:5000\/js\/ts-serve:latest/g" stack.yml; sed -i "s/name:\ faas/name:\ openfaas/g" stack.yml; faas-cli build; docker tag js/ts-serve localhost:5000/js/ts-serve; docker push localhost:5000/js/ts-serve; faas-cli deploy -f ./stack.yml; curl -d '{"instances": [3.0, 5.0, 8.0]}' -X POST http://localhost:8080/function/ts-serve/v1/models/half_plus_two:predict; 
 jinlets $site $pass $(jdocipk3s):31112; echo $passofs; 
+fi 
+
+if [[ $1 == 'oom_c' ]]; then
+#cd; wget https://get.helm.sh/helm-v2.9.1-linux-amd64.tar.gz -O - | tar -xz; mv linux-amd64/helm /usr/local/bin/;
+curl -sSL https://raw.githubusercontent.com/helm/helm/master/scripts/get | bash; # helm 2; 
+jk3d 4; git clone -b casablanca http://gerrit.onap.org/r/oom; 
+sed -i 's/tillerVersion: "~2.9.1"/#tillerVersion: "~2.9.1"/g' ~/oom/kubernetes/onap/Chart.yaml
+helm init; sudo cp -R ~/oom/kubernetes/helm/plugins/ ~/.helm; cd oom/kubernetes; helm serve &:; helm repo add local http://127.0.0.1:8879; helm repo list; make all; make onap; helm search -l;
+sed -i "s/LOG_DIR=\$CHART_DIR\/logs/LOG_DIR=~\/logs/g" ~/.helm/plugins/deploy/deploy.sh
+kubectl create serviceaccount --namespace kube-system tiller; kubectl create clusterrolebinding tiller-cluster-rule --clusterrole=cluster-admin --serviceaccount=kube-system:tiller; kubectl patch deploy --namespace kube-system tiller-deploy -p '{"spec":{"template":{"spec":{"serviceAccount":"tiller"}}}}'; helm init --service-account tiller --upgrade
+sleep 10; helm deploy dev local/onap --namespace onap; 
+kubectl get pods --all-namespaces -o=wide; 
+#helm undeploy dev –purge; 
+fi 
+
+if [[ $1 == 'oom_d' ]]; then
+jk3d 4; curl -sSL https://raw.githubusercontent.com/helm/helm/master/scripts/get | bash; 
+git clone -b 4.0.0-ONAP http://gerrit.onap.org/r/oom --recurse-submodules; helm init; cd oom/kubernetes; sudo cp -R ~/oom/kubernetes/helm/plugins/ ~/.helm; helm serve &:; helm repo add local http://127.0.0.1:8879; helm repo list; make all; make onap; helm search onap -l; 
+cd ~/oom/kubernetes; helm deploy dev local/onap --namespace onap -f onap/resources/overrides/onap-all.yaml -f onap/resources/overrides/openstack.yaml --timeout 900; 
+kubectl get pods -n onap -o=wide; 
+#helm undeploy dev --purge; 
 fi 
 
