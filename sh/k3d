@@ -1,33 +1,16 @@
 #!/bin/bash 
-if [[ $(which wget) == '' ]]; then 
-apt-get update && apt-get install -y wget sudo curl 
-fi 
-
-if [[ $(which kubectl) == '' ]]; then
-sudo apt-get update && sudo apt-get install -y apt-transport-https gnupg2 curl
-curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
-echo "deb https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee -a /etc/apt/sources.list.d/kubernetes.list
-sudo apt-get update
-sudo apt-get install -y kubectl
-fi
-
-if [[ $(which docker) == '' ]]; then
-sudo apt-get update
-sudo apt-get install -y docker.io socat
-sudo groupadd docker
-sudo usermod -aG docker $USER
-sudo chmod 666 /var/run/docker.sock
-fi
-
-if [[ $(which k3d) == '' ]]; then
+if [[ $(which sudo) == '' ]]; then alias sudo=''; fi;
+if [[ $1 == '' ]]; then 
+sudo apt-get update && sudo apt-get install -y wget sudo curl make vim apt-transport-https gnupg2 
+curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -; echo "deb https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee -a /etc/apt/sources.list.d/kubernetes.list
+sudo apt-get update && sudo apt-get install -y kubectl docker.io socat
+sudo groupadd docker; sudo usermod -aG docker $USER; sudo chmod 666 /var/run/docker.sock
 curl -s   https://raw.githubusercontent.com/rancher/k3d/main/install.sh | bash 
 curl -sSL https://get.inlets.dev | sh; sudo cp inlets /usr/local/bin/inlets; rm inlets; 
-fi
-
-apt-get update && apt-get install -y make 
 #curl -sSL https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash; # helm 3; 
 #curl -sSL https://raw.githubusercontent.com/helm/helm/master/scripts/get | bash; # helm 2; 
-if [ ! -f a ];then wget https://raw.githubusercontent.com/JamesSheen/js/master/sh/a; source a;fi; 
+fi
+if [ ! -f a ]; then wget https://raw.githubusercontent.com/JamesSheen/js/master/sh/a; source a; fi; 
 
 if [[ $1 == 'faas' ]]; then if [[ $2 == '' ]]; then read -rsp $'Site: \n' site; else site=$2; fi; if [[ $3 == '' ]]; then read -rsp $'Pass: \n' pass; else pass=$3; fi; 
 jk3d; git clone https://github.com/openfaas/faas-netes; cd faas-netes; kubectl apply -f namespaces.yml; export passofs=$(head -c 12 /dev/urandom|shasum|cut -d' ' -f1); kubectl -n openfaas create secret generic basic-auth --from-literal=basic-auth-user=admin --from-literal=basic-auth-password=$passofs; kubectl apply -f ./yaml; 
@@ -35,6 +18,38 @@ cd; jkubreg; curl -sLS https://cli.openfaas.com | sh; sudo cp faas-cli /usr/loca
 jsocat 127.0.0.1 8080 $(jdocipk3s) 31112; sleep 20; echo $passofs | faas-cli login --password-stdin; 
 cd; mkdir tfs; cd tfs; git clone https://github.com/alexellis/tensorflow-serving-openfaas; cd tensorflow-serving-openfaas; git clone https://github.com/tensorflow/serving; cp -r serving/tensorflow_serving/servables/tensorflow/testdata/saved_model_half_plus_two_cpu ./ts-serve/saved_model_half_plus_two_cpu; sed -i "s/alexellis2\/ts-serve:latest/localhost:5000\/js\/ts-serve:latest/g" stack.yml; sed -i "s/name:\ faas/name:\ openfaas/g" stack.yml; faas-cli build; docker tag js/ts-serve localhost:5000/js/ts-serve; docker push localhost:5000/js/ts-serve; faas-cli deploy -f ./stack.yml; curl -d '{"instances": [3.0, 5.0, 8.0]}' -X POST http://localhost:8080/function/ts-serve/v1/models/half_plus_two:predict; 
 jinlets $site $pass $(jdocipk3s):31112; echo $passofs; 
+fi 
+
+if [[ $1 == 'kubedash' ]]; then if [[ $2 == '' ]]; then read -rsp $'Site: \n' site; else site=$2; fi; if [[ $3 == '' ]]; then read -rsp $'Pass: \n' pass; else pass=$3; fi; 
+jkill inlets; 
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.2.0/aio/deploy/alternative.yaml #recommended.yaml
+sleep 10
+#kubectl proxy; jkubnns kubernetes-dashboard; jkub edit svc kubernetes-dashboard; # ClusterIP to NodePort; 
+kubectl -n kubernetes-dashboard get svc kubernetes-dashboard -o yaml > x.yaml && sed -i 's/type\:\ ClusterIP/type\:\ NodePort/g' x.yaml && kubectl replace -f x.yaml; rm x.yaml; 
+cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: admin-user
+  namespace: kubernetes-dashboard
+EOF
+cat <<EOF | kubectl apply -f -
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: admin-user
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+- kind: ServiceAccount
+  name: admin-user
+  namespace: kubernetes-dashboard
+EOF
+jinlets $site $pass $(jdocipk3s):$(jkub -n kubernetes-dashboard get svc | grep NodePort | awk '{print $5}' | sed 's/80\://g' | sed 's/\/TCP//g'); 
+echo -e '\n'; kubectl -n kubernetes-dashboard get secret $(kubectl -n kubernetes-dashboard get sa/admin-user -o jsonpath="{.secrets[0].name}") -o go-template="{{.data.token | base64decode}}"; echo -e '\n' 
+#kubectl -n kubernetes-dashboard delete serviceaccount admin-user; kubectl -n kubernetes-dashboard delete clusterrolebinding admin-user; 
 fi 
 
 if [[ $1 == 'oom_c' ]]; then
@@ -56,5 +71,21 @@ git clone -b 4.0.0-ONAP http://gerrit.onap.org/r/oom --recurse-submodules; helm 
 cd ~/oom/kubernetes; helm deploy dev local/onap --namespace onap -f onap/resources/overrides/onap-all.yaml -f onap/resources/overrides/openstack.yaml --timeout 900; 
 kubectl get pods -n onap -o=wide; 
 #helm undeploy dev --purge; 
+fi 
+
+if [[ $1 == 'clara_pre' ]]; then
+# https://docs.nvidia.com/clara/tlt-mi/nvmidl/installation.html; https://docs.nvidia.com/clara/tlt-mi/nvmidl/appendix/cloud_service_provider.html; 
+export dockerImage=nvcr.io/nvidia/clara-train-sdk:v3.1.01; docker pull $dockerImage; 
+docker run -it --rm --shm-size=1G --ulimit memlock=-1 --ulimit stack=67108864 --ipc=host --net=host -v /root/x:/root/x $dockerImage /bin/bash
+fi 
+
+if [[ $1 == 'clara' ]]; then
+# https://docs.nvidia.com/clara/tlt-mi/aiaa/quickstart.html; 
+ngc registry model list nvidia/med/*
+MODEL_NAME=clara_mri_seg_brain_tumors_br16_full_amp; VERSION=1; ngc registry model download-version nvidia/med/$MODEL_NAME:$VERSION --dest .
+#start_aas.sh --workspace ~/x/aiaa # TRITON engine; 
+start_aas.sh --workspace ~/x/aiaa --port 5000 --engine AIAA # AIAA engine;
+curl -X PUT "http://localhost:80/admin/model/clara_ct_seg_spleen_amp" -H "accept: application/json" -H "Content-Type: application/json" -d '{"path":"nvidia/med/clara_ct_seg_spleen_amp","version":"1"}'
+#stop_aas.sh
 fi 
 
