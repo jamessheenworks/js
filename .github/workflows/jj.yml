@@ -1,8 +1,6 @@
 
 on: 
-  push: 
-    paths: 
-      - dc/jj
+  workflow_dispatch: 
 
 jobs: 
   job: 

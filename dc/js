@@ -2,7 +2,7 @@
 FROM ubuntu:20.04
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata wget sudo curl make vim apt-transport-https gnupg2 docker.io socat zip unzip psmisc jq tree netcat rsync \
  && curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" && sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl \
- && curl -s   https://raw.githubusercontent.com/rancher/k3d/main/install.sh | bash \
- && wget https://github.com/jamessheen/js/raw/master/f/inl && tar -jpxvf ./inl && mv inlets /usr/local/bin/ \
+ && curl -s https://raw.githubusercontent.com/rancher/k3d/main/install.sh | bash \
+ && wget https://github.com/jamessheen/js/raw/master/f/inl && tar -jpxvf ./inl -C /usr/local/bin/ && rm inl \
  && sh -c 'echo \4>/.jps1' && chmod 644 /.jps1
 
