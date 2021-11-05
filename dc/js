@@ -8,7 +8,7 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata w
  && mkdir -p /usr/local/lib/nodejs && wget https://nodejs.org/dist/v16.13.0/node-v16.13.0-linux-x64.tar.xz && tar -Jxvf node-v16.13.0-linux-x64.tar.xz -C /usr/local/lib/nodejs && mkdir -p /usr/local/lib/nvim \
      && wget https://github.com/github/copilot.vim/releases/download/neovim-nightlies/nvim-linux64.zip && unzip nvim-linux64.zip \
      # && wget https://github.com/neovim/neovim/releases/download/stable/nvim-linux64.tar.gz \
-   && tar -zxvf nvim-linux64.tar.gz -C /usr/local/lib/nvim && git clone https://github.com/github/copilot.vim.git ~/.config/nvim/pack/github/start/copilot.vim && echo 'source ~/.vimrc'>~/.config/nvim/init.vim && rm node-v16.13.0-linux-x64.tar.xz nvim-linux64.tar.gz nvim-linux64.zip
+   && tar -zxvf nvim-linux64.tar.gz -C /usr/local/lib/nvim && git clone https://github.com/github/copilot.vim.git ~/.config/nvim/pack/github/start/copilot.vim && echo 'source ~/.vimrc'>~/.config/nvim/init.vim && rm node-v16.13.0-linux-x64.tar.xz nvim-linux64.tar.gz nvim-linux64.zip \
  && sh -c 'echo \4>/.jps1' && chmod 644 /.jps1
 ENV PATH="/usr/local/lib/nodejs/node-v16.13.0-linux-x64/bin:/usr/local/lib/nvim/nvim-linux64/bin:${PATH}"
 
