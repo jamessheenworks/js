@@ -1,0 +1,8 @@
+
+FROM js72/js
+
+RUN apt update \
+ && apt install -y build-essential \
+ && wget https://golang.org/dl/go1.16.8.linux-amd64.tar.gz; tar -C /usr/local -xzf go1.16.8.linux-amd64.tar.gz; rm go1.16.8.linux-amd64.tar.gz; ln -s /usr/local/go/bin/go /usr/local/bin/go \
+ && curl -OJL https://github.com/operator-framework/operator-sdk/releases/download/v1.13.0/operator-sdk_linux_amd64; chmod +x operator-sdk_linux_amd64; sudo mv operator-sdk_linux_amd64 /usr/local/bin/operator-sdk \
+ && sudo sh -c 'echo \4 \-op>/.jps1'; sudo chmod 644 /.jps1

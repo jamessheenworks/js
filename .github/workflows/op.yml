@@ -1,0 +1,20 @@
+
+on: 
+  workflow_dispatch: 
+
+jobs: 
+  job: 
+    runs-on: ubuntu-latest
+    env: 
+      A: op
+    steps: 
+      - uses: actions/checkout@v2
+      - run: |
+          chr=({a..z});x=$(date +%Y)-2020;x=${chr[$x]};x=${x}$(printf "%x" $((date +%m)|sed "s/^0*//"))$(date +%d);
+          docker build -t js72/${{env.A}}:latest -t js72/${{env.A}}:$x - < dc/${{env.A}}
+          echo "${{secrets.DOC}}" | docker login -u js72 --password-stdin 
+          docker push -a js72/${{env.A}}
+          docker logout
+      - run: |
+          docker images
+
