@@ -2,6 +2,6 @@
 FROM js72/js
 
 RUN sudo apt-get update \
- && sudo apt-get install -y python3 python3-pip; pip install uncompyle6 pydrive \
+ && sudo apt-get install -y python3 python3-pip; pip install uncompyle6 pydrive selenium requests_html; pip install -U requests \
  && sudo apt-get install -y npm; npm install -g npm \
  && sudo sh -c 'echo \4 \-dv>/.jps1'; sudo chmod 644 /.jps1

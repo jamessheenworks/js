@@ -1,0 +1,10 @@
+
+FROM js72/js
+
+RUN sudo apt-get update \
+ && sudo apt-get install -y python3 python3-pip \
+ && pip install python-dotenv "streamlit >= 1.32.0, < 2.0.0" pytest \
+   openai neo4j PyPDF2 \
+   langchain langchain-community langchain-openai \
+   llama-index llama-index-core llama-index-embeddings-openai llama-parse llama-index-postprocessor-flag-embedding-reranker \
+ && sudo sh -c 'echo \4 \-lm>/.jps1'; sudo chmod 644 /.jps1
